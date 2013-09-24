@@ -4,12 +4,6 @@ var csv = require('csv');
 var url = require("url");
 
 
-var offset = 2795745;
-var length = 1000;
-var calclength = 17390;
-var mimetype = '';
-var usecalclength = true;
-var blocks = 0;
 
 var warc;
 
@@ -24,7 +18,17 @@ csv()
 	 } ); 
 
 
-function readLines(input, func, res) {
+// create server
+http.createServer(function (req, res) {
+
+var offset = 2795745;
+var length = 1000;
+var calclength = 17390;
+var mimetype = '';
+var usecalclength = true;
+var blocks = 0;
+
+function extractFile(input, func, res) {
   var remaining = '';
 
   input.on('data', function(data) {
@@ -80,14 +84,14 @@ function func(data) {
   		}
 
   	}
-    console.log('Line: (' + data.length + ') ' + data);
+   // console.log('Line: (' + data.length + ') ' + data);
 
   }
 }
 
 
-// create server
-http.createServer(function (req, res) {
+
+
 	var pathname = "http://drupalib.interoperating.info" + url.parse(req.url).pathname;
 	console.log("Request for: " + pathname);
 	// find entry in warc array
@@ -107,7 +111,7 @@ http.createServer(function (req, res) {
 	  'end': 1000 + offset
 	})
 	// parse out the headers and send response
-	readLines(input, func, res);
+	extractFile(input, func, res);
 	
 
 //	res.end(offset);
