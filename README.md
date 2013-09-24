@@ -32,7 +32,7 @@ warkindex drupalib.interoperating.info.warc > drupalib.interoperating.info.warc.
 ```
 node warcnode.js
 ```
-- visit http://127.0.0.1/WARC/
+- visit http://127.0.0.1:1337/WARC/
 
 ## Note
 
