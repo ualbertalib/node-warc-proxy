@@ -21,9 +21,9 @@ csv()
 // create server
 http.createServer(function (req, res) {
 
-var offset = 2795745;
-var length = 1000;
-var calclength = 17390;
+var offset = 0;
+var length = 0;
+var headerlength = 0;
 var mimetype = '';
 var usecalclength = true;
 var blocks = 0;
@@ -46,10 +46,12 @@ function extractFile(input, func, res) {
     if (remaining.length > 0) {
       func(remaining);
     }
-    	if (usecalclength)
-		length = calclength;
-		
-	console.log("offset: " + offset + " length: " + length + ' calclength: ' + calclength);
+	offset = offset + headerlength;
+    if (usecalclength) {
+		length = length - headerlength;
+	}
+	
+	console.log("offset: " + offset + " length: " + length + ' headerlength: ' + headerlength);
 	
 	res.writeHead(200, {'Content-Type': mimetype});
 
@@ -69,8 +71,7 @@ function func(data) {
   	console.log('End of headers ' + blocks);
   }
   if (blocks < 2) {
-  	offset = offset + data.length +1;
-  	calclength = calclength - data.length - 1;
+  	headerlength = headerlength + data.length +1;
 	if (blocks == 1) {
   		// we're in the response header, so look for length and type
   		if (data.indexOf('Content-Length:') == 0) {
@@ -104,6 +105,13 @@ function func(data) {
         }
     }
 
+	if (offset == 0) {
+		// not found in warc
+    	res.writeHead(404, {"Content-Type": "text/plain"});
+	    res.write("404 Not found");
+    	res.end();
+	}
+	else {
 	// fetch the first 1000 characters of the warc record
 	var input = fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
 	  'bufferSize': 4 * 1024,
@@ -112,7 +120,7 @@ function func(data) {
 	})
 	// parse out the headers and send response
 	extractFile(input, func, res);
-	
+	}
 
 //	res.end(offset);
 }).listen(1337, '127.0.0.1');
