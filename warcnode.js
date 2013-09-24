@@ -1,11 +1,9 @@
 var http = require('http');
 var fs = require('fs');
 var csv = require('csv');
-var readline = require('readline');
 var url = require("url");
 
 
-var response;
 var offset = 2795745;
 var length = 1000;
 var calclength = 17390;
@@ -51,7 +49,7 @@ function readLines(input, func, res) {
 	
 	res.writeHead(200, {'Content-Type': mimetype});
 
-	var input = fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
+	fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
 	  'bufferSize': 4 * 1024,
 	  'start': offset +2, 
 	  'end': length + offset + 2
@@ -90,8 +88,6 @@ function func(data) {
 
 // create server
 http.createServer(function (req, res) {
-	response = res;
-	
 	var pathname = "http://drupalib.interoperating.info" + url.parse(req.url).pathname;
 	console.log("Request for: " + pathname);
 	// find entry in warc array
@@ -104,12 +100,13 @@ http.createServer(function (req, res) {
         }
     }
 
-	
+	// fetch the first 1000 characters of the warc record
 	var input = fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
 	  'bufferSize': 4 * 1024,
 	  'start': offset, 
-	  'end': offset + length
+	  'end': 1000 + offset
 	})
+	// parse out the headers and send response
 	readLines(input, func, res);
 	
 
