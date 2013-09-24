@@ -24,7 +24,7 @@ Currently works on hard-coded warc [drupalib.interoperating.info.warc.gz](https:
 - generate the csv index (in the same directory as drupalib.interoperating.info.warc.gz):
 
 ```
-warkindex drupalib.interoperating.info.warc > drupalib.interoperating.info.warc.csv
+warcindex drupalib.interoperating.info.warc > drupalib.interoperating.info.warc.csv
 ```
 
 - in the directory with warcnode.js:
@@ -32,7 +32,7 @@ warkindex drupalib.interoperating.info.warc > drupalib.interoperating.info.warc.
 ```
 node warcnode.js
 ```
-- visit http://127.0.0.1/WARC/
+- visit http://127.0.0.1:1337/WARC/
 
 ## Note
 
