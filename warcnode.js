@@ -53,14 +53,13 @@ function extractFile(input, func, res) {
 	
 	console.log("offset: " + offset + " length: " + length + ' headerlength: ' + headerlength);
 	
-	res.writeHead(200, {'Content-Type': mimetype});
+	res.writeHead(200, {'Content-Type': mimetype,'Content-Length': length});
 
 	fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
 	  'bufferSize': 4 * 1024,
 	  'start': offset +2, 
 	  'end': length + offset + 2
 	}).pipe(res);
-
     
   });
 }
