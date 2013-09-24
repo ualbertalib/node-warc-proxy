@@ -53,7 +53,7 @@ function extractFile(input, func, res) {
 	
 	console.log("offset: " + offset + " length: " + length + ' headerlength: ' + headerlength);
 	
-	res.writeHead(200, {'Content-Type': mimetype,'Content-Length': length});
+	res.writeHead(200, {'Content-Type': mimetype, 'Content-Length': length});
 
 	fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
 	  'bufferSize': 4 * 1024,
@@ -96,6 +96,24 @@ function func(data) {
 	if (url.parse(req.url).query != null)
 		pathname += '?' + url.parse(req.url).query;
 	console.log("Request for: " + pathname);
+	
+	var pathroot = "http://drupalib.interoperating.info".length;
+	
+	// serve list of WARC contents from /WARC/
+	if (pathname == "http://drupalib.interoperating.info/WARC/") {
+		res.writeHead(200, {"Content-Type": "text/html"});
+		res.write("<html><head><title>WARC Contents</title></head><body><h1>WARC Contents</h1>");
+		res.write("<table><tr><td>Offset</td><td>Path</td></tr>");
+		   for(var i=0; i<warc.length; i++) {
+			  if (warc[i][2] == 'response') {
+			  	res.write("<tr><td>" + warc[i][1] + "</td>"
+			  	+ "<td><a href='" + warc[i][3].substring(pathroot) + "'>" + warc[i][3] + "</a></td></tr>");
+      		}
+      	}
+      	res.end();
+	}
+	// otherwise treat path as entry in WARC
+	else {
 	// find entry in warc array
    for(var i=0; i<warc.length; i++) {
         if ((warc[i][3] == pathname) && (warc[i][2] == 'response')) {
@@ -106,12 +124,14 @@ function func(data) {
         }
     }
 
+	// if no record found, send 404
 	if (offset == 0) {
 		// not found in warc
     	res.writeHead(404, {"Content-Type": "text/plain"});
-	    res.write("404 Not found");
+	    res.write("404 Not found in WARC");
     	res.end();
 	}
+	// otherwise fetch the record
 	else {
 	// fetch the first 1000 characters of the warc record
 	var input = fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
@@ -122,7 +142,7 @@ function func(data) {
 	// parse out the headers and send response
 	extractFile(input, func, res);
 	}
-
+	}
 //	res.end(offset);
 }).listen(1337, '127.0.0.1');
 console.log('Server running at http://127.0.0.1:1337/');
