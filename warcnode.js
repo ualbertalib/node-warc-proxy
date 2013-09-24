@@ -94,6 +94,8 @@ function func(data) {
 
 
 	var pathname = "http://drupalib.interoperating.info" + url.parse(req.url).pathname;
+	if (url.parse(req.url).query != null)
+		pathname += '?' + url.parse(req.url).query;
 	console.log("Request for: " + pathname);
 	// find entry in warc array
    for(var i=0; i<warc.length; i++) {
