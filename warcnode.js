@@ -2,16 +2,20 @@ var http = require('http');
 var fs = require('fs');
 var csv = require('csv');
 var url = require("url");
+var stdio = require('stdio');
 
+var ops = stdio.getopt({
+    'warc': {args: 1, mandatory: true, description: "Path to WARC"}
+});
 
-
+var warcpath = ops.warc + "";
+var warccvs = warcpath + ".csv";
 var warc;
-
 // load data
 // #WARC filename offset warc-type warc-subject-uri warc-record-id content-type content-length
 
 csv()
-	.from.path('../warc/drupalib.interoperating.info.warc.csv', { delimiter: ' ', escape: '"' })
+	.from.path(warccvs, { delimiter: ' ', escape: '"' })
 	 .to.array( function(data){
 	//	  console.log(data)
 		  warc = data;
@@ -55,7 +59,7 @@ function extractFile(input, func, res) {
 	
 	res.writeHead(200, {'Content-Type': mimetype, 'Content-Length': length});
 
-	fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
+	fs.createReadStream(warcpath, {
 	  'bufferSize': 4 * 1024,
 	  'start': offset +2, 
 	  'end': length + offset + 2
@@ -134,7 +138,7 @@ function func(data) {
 	// otherwise fetch the record
 	else {
 	// fetch the first 1000 characters of the warc record
-	var input = fs.createReadStream('../warc/drupalib.interoperating.info.warc', {
+	var input = fs.createReadStream(warcpath, {
 	  'bufferSize': 4 * 1024,
 	  'start': offset, 
 	  'end': 1000 + offset
