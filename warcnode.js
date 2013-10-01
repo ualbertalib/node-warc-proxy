@@ -31,6 +31,10 @@ var headerlength = 0;
 var mimetype = '';
 var usecalclength = true;
 var blocks = 0;
+	var reqpath = url.parse(req.url).pathname;
+	if (url.parse(req.url).query != null)
+		reqpath += '?' + url.parse(req.url).query;
+	var pathname = "http://drupalib.interoperating.info" + reqpath;
 
 function extractFile(input, func, res) {
   var remaining = '';
@@ -55,7 +59,7 @@ function extractFile(input, func, res) {
 		length = length - headerlength;
 	}
 	
-	console.log("offset: " + offset + " length: " + length + ' headerlength: ' + headerlength);
+	console.log(reqpath + " " + "200 " + mimetype + " offset: " + offset + " length: " + length + ' headerlength: ' + headerlength);
 	
 	res.writeHead(200, {'Content-Type': mimetype, 'Content-Length': length});
 
@@ -71,7 +75,7 @@ function extractFile(input, func, res) {
 function func(data) {
   if (data.length == 1){
   	blocks = blocks+1;
-  	console.log('End of headers ' + blocks);
+  	//console.log('End of headers ' + blocks);
   }
   if (blocks < 2) {
   	headerlength = headerlength + data.length +1;
@@ -80,11 +84,11 @@ function func(data) {
   		if (data.indexOf('Content-Length:') == 0) {
   			length = parseInt(data.substring(16));
   			usecalclength = false;
-  			console.log("Found Content-Length: " + length);
+  			//console.log("Found Content-Length: " + length);
   			}
   		else if (data.indexOf('Content-Type:') == 0) {
-  			mimetype = data.substring(13);
-  			console.log ("Found mimetype: " + mimetype);
+  			mimetype = data.substring(13).trim();
+  			//console.log ("Found mimetype: " + mimetype);
   		}
 
   	}
@@ -96,10 +100,6 @@ function func(data) {
 
 
 
-	var pathname = "http://drupalib.interoperating.info" + url.parse(req.url).pathname;
-	if (url.parse(req.url).query != null)
-		pathname += '?' + url.parse(req.url).query;
-	console.log("Request for: " + pathname);
 	
 	var pathroot = "http://drupalib.interoperating.info".length;
 	
@@ -123,7 +123,7 @@ function func(data) {
         if ((warc[i][3] == pathname) && (warc[i][2] == 'response')) {
         	offset = parseInt(warc[i][1]);
         	length = parseInt(warc[i][6]);
-        	console.log("Found in warc: " + offset + " " + length);
+        	//console.log("Found in warc: " + offset + " " + length);
         	break;
         }
     }
@@ -131,6 +131,7 @@ function func(data) {
 	// if no record found, send 404
 	if (offset == 0) {
 		// not found in warc
+		console.log(reqpath + " 404");
     	res.writeHead(404, {"Content-Type": "text/plain"});
 	    res.write("404 Not found in WARC");
     	res.end();
@@ -150,6 +151,6 @@ function func(data) {
 	}
 //	res.end(offset);
 }).listen(1337, '127.0.0.1');
-console.log('Server running at http://127.0.0.1:1337/');
+console.log('Server running at http://127.0.0.1:1337/WARC/');
 
 	 
