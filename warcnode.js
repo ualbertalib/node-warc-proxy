@@ -137,11 +137,12 @@ function func(data) {
 	}
 	// otherwise fetch the record
 	else {
-	// fetch the first 1000 characters of the warc record
+	// fetch the first 2000 characters of the warc record (assumed to be enough to 
+	// contain the headers)
 	var input = fs.createReadStream(warcpath, {
 	  'bufferSize': 4 * 1024,
 	  'start': offset, 
-	  'end': 1000 + offset
+	  'end': 2000 + offset
 	})
 	// parse out the headers and send response
 	extractFile(input, func, res);
