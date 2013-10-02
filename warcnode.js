@@ -11,6 +11,8 @@ var ops = stdio.getopt({
 var warcpath = ops.warc + "";
 var warccvs = warcpath + ".csv";
 var warc;
+var pathroot;
+
 // load data
 // #WARC filename offset warc-type warc-subject-uri warc-record-id content-type content-length
 
@@ -19,6 +21,17 @@ csv()
 	 .to.array( function(data){
 	//	  console.log(data)
 		  warc = data;
+		  // get root from first response entry
+		   for(var i=0; i<warc.length; i++) {
+        		if (warc[i][2] == 'response') {
+        			// assume first response contains root - but need to strip final /
+        			var re = new RegExp("^(https?\:\/\/.*)\/.*");
+		        	pathroot = warc[i][3].match(re)[1];
+		        	//console.log(pathroot);
+        			break;
+        		}
+    		}
+
 	 } ); 
 
 
@@ -34,7 +47,7 @@ var blocks = 0;
 	var reqpath = url.parse(req.url).pathname;
 	if (url.parse(req.url).query != null)
 		reqpath += '?' + url.parse(req.url).query;
-	var pathname = "http://drupalib.interoperating.info" + reqpath;
+	var pathname = pathroot + reqpath;
 
 function extractFile(input, func, res) {
   var remaining = '';
@@ -59,7 +72,7 @@ function extractFile(input, func, res) {
 		length = length - headerlength;
 	}
 	
-	console.log(reqpath + " " + "200 " + mimetype + " offset: " + offset + " length: " + length + ' headerlength: ' + headerlength);
+	console.log(decodeURI(reqpath) + " 200 " + mimetype + " offset:" + offset + " length:" + length + ' headerlength:' + headerlength);
 	
 	res.writeHead(200, {'Content-Type': mimetype, 'Content-Length': length});
 
@@ -83,6 +96,7 @@ function func(data) {
   		// we're in the response header, so look for length and type
   		if (data.indexOf('Content-Length:') == 0) {
   			length = parseInt(data.substring(16));
+  			// we found a set length, so we don't have to use calculated length
   			usecalclength = false;
   			//console.log("Found Content-Length: " + length);
   			}
@@ -101,17 +115,17 @@ function func(data) {
 
 
 	
-	var pathroot = "http://drupalib.interoperating.info".length;
+	var rootlength = pathroot.length;
 	
 	// serve list of WARC contents from /WARC/
-	if (pathname == "http://drupalib.interoperating.info/WARC/") {
+	if (pathname == pathroot + "/WARC/") {
 		res.writeHead(200, {"Content-Type": "text/html"});
 		res.write("<html><head><title>WARC Contents</title></head><body><h1>WARC Contents</h1>");
 		res.write("<table><tr><td>Offset</td><td>Path</td></tr>");
 		   for(var i=0; i<warc.length; i++) {
 			  if (warc[i][2] == 'response') {
 			  	res.write("<tr><td>" + warc[i][1] + "</td>"
-			  	+ "<td><a href='" + warc[i][3].substring(pathroot) + "'>" + warc[i][3] + "</a></td></tr>");
+			  	+ "<td><a href='" + warc[i][3].substring(rootlength) + "'>" + warc[i][3] + "</a></td></tr>");
       		}
       	}
       	res.end();
