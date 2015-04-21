@@ -1,6 +1,7 @@
 var http = require('http');
 var fs = require('fs');
-var csv = require('csv');
+var parse = require('csv-parse');
+var transform = require('stream-transform');
 var url = require("url");
 var stdio = require('stdio');
 
@@ -16,24 +17,22 @@ var pathroot;
 // load data
 // #WARC filename offset warc-type warc-subject-uri warc-record-id content-type content-length
 
-csv()
-	.from.path(warccvs, { delimiter: ' ', escape: '"' })
-	 .to.array( function(data){
-	//	  console.log(data)
-		  warc = data;
-		  // get root from first response entry
-		   for(var i=0; i<warc.length; i++) {
-        		if (warc[i][2] == 'response') {
-        			// assume first response contains root - but need to strip final /
-        			var re = new RegExp("^(https?\:\/\/.*)\/.*");
-		        	pathroot = warc[i][3].match(re)[1];
-		        	//console.log(pathroot);
-        			break;
-        		}
-    		}
+var parser = parse({ delimiter: ' ', escape: '"' }, function(err, data){
+    //	  console.log(data)
+  warc = data;
+  // get root from first response entry
+   for(var i=0; i<warc.length; i++) {
+		if (warc[i][2] == 'response') {
+			// assume first response contains root - but need to strip final /
+			var re = new RegExp("^(https?\:\/\/.*)\/.*");
+        	pathroot = warc[i][3].match(re)[1];
+        	//console.log(pathroot);
+			break;
+		}
+	}
+});
 
-	 } ); 
-
+fs.createReadStream(warccvs).pipe(parser);
 
 // create server
 http.createServer(function (req, res) {
@@ -71,17 +70,17 @@ function extractFile(input, func, res) {
     if (usecalclength) {
 		length = length - headerlength;
 	}
-	
+
 	console.log(decodeURI(reqpath) + " 200 " + mimetype + " offset:" + offset + " length:" + length + ' headerlength:' + headerlength);
-	
+
 	res.writeHead(200, {'Content-Type': mimetype, 'Content-Length': length});
 
 	fs.createReadStream(warcpath, {
 	  'bufferSize': 4 * 1024,
-	  'start': offset +2, 
+	  'start': offset +2,
 	  'end': length + offset + 2
 	}).pipe(res);
-    
+
   });
 }
 
@@ -114,9 +113,9 @@ function func(data) {
 
 
 
-	
+
 	var rootlength = pathroot.length;
-	
+
 	// serve list of WARC contents from /WARC/
 	if (pathname == pathroot + "/WARC/") {
 		res.writeHead(200, {"Content-Type": "text/html"});
@@ -152,11 +151,11 @@ function func(data) {
 	}
 	// otherwise fetch the record
 	else {
-	// fetch the first 2000 characters of the warc record (assumed to be enough to 
+	// fetch the first 2000 characters of the warc record (assumed to be enough to
 	// contain the headers)
 	var input = fs.createReadStream(warcpath, {
 	  'bufferSize': 4 * 1024,
-	  'start': offset, 
+	  'start': offset,
 	  'end': 2000 + offset
 	})
 	// parse out the headers and send response
@@ -166,5 +165,3 @@ function func(data) {
 //	res.end(offset);
 }).listen(1337, '127.0.0.1');
 console.log('Server running at http://127.0.0.1:1337/WARC/');
-
-	 
